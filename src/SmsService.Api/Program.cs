@@ -1,3 +1,4 @@
+using Polly;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using SmsService.Api.Data;
@@ -18,6 +19,14 @@ builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlServer(connectionString
 builder.Services.AddScoped<EmployeeSeeder>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<SendWorkerSignal>();
+builder.Services.AddHostedService<SendWorker>();
+
+var providerBaseUrl = builder.Configuration["SmsProvider:BaseUrl"]
+    ?? throw new InvalidOperationException("Missing 'SmsProvider:BaseUrl' (env var SmsProvider__BaseUrl).");
+builder.Services.AddHttpClient<ISmsProviderClient, SmsProviderClient>(c =>
+        c.BaseAddress = new Uri(providerBaseUrl.TrimEnd('/') + "/"))
+    // Timeout only. No retry here: retries are owned by SendWorker and persisted in Attempts.
+    .AddResilienceHandler("sms-provider", pipeline => pipeline.AddTimeout(TimeSpan.FromSeconds(5)));
 
 builder.Services.AddProblemDetails(); // RFC 9457 responses, including traceId
 builder.Services.AddOpenApi();
