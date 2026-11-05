@@ -4,6 +4,17 @@ public sealed record SendMessageRequest(string? To, string? Body);
 
 public sealed record SendMessageResponse(Guid Id, string Status);
 
+/// <summary>
+/// Response of GET /messages/{id}: the status only, plus the fields that explain it
+/// (attempts, last error, last update). Recipient and body are not exposed here.
+/// </summary>
+public sealed record MessageStatusResponse(
+    Guid Id,
+    string Status,
+    int Attempts,
+    string? LastError,
+    DateTimeOffset UpdatedAt);
+
 public sealed record EmployeeNameResponse(string FirstName, string LastName);
 
 public sealed record MessageResponse(
