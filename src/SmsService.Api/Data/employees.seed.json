@@ -1,0 +1,10 @@
+[
+  { "firstName": "ישראל", "lastName": "כהן", "address": "הרצל 10, ראשון לציון", "phone": "050-1234567" },
+  { "firstName": "ישראל", "lastName": "כהן", "address": "הרצל 10, ראשון לציון", "phone": "052-7654321" },
+  { "firstName": "ישראל ", "lastName": "כהן", "address": "הרצל  10, ראשון לציון", "phone": "+972501234567" },
+  { "firstName": "ישראל", "lastName": "כהן", "address": "ויצמן 5, רחובות", "phone": "054-2222222" },
+  { "firstName": "משה", "lastName": "לוי", "address": "הנשיא 3, בית דגן", "phone": "053-3333333" },
+  { "firstName": "יעקב", "lastName": "לוי", "address": "הנשיא 3, בית דגן", "phone": "053-3333333" },
+  { "firstName": "דוד", "lastName": "מזרחי", "address": "דרך המכבים 40, מודיעין", "phone": "058-4444444" },
+  { "firstName": "אברהם", "lastName": "פרץ", "address": "השקד 7, חולון", "phone": "02-6543210" }
+]
