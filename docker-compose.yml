@@ -15,5 +15,21 @@ services:
       retries: 30
       start_period: 20s
 
+  api:
+    build: ./src/SmsService.Api
+    environment:
+      ConnectionStrings__Default: "Server=db,1433;Database=SmsService;User Id=sa;TrustServerCertificate=True"
+      Database__Password: ${MSSQL_SA_PASSWORD}
+      SmsProvider__BaseUrl: ${SMS_PROVIDER_URL:-http://host.docker.internal:5005}
+    ports:
+      - "8080:8080"
+    extra_hosts:
+      # Lets the container reach a provider simulator running on the host (needed on Linux; built in on Docker Desktop).
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+
 volumes:
   sqldata:

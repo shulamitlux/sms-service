@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using Polly.Timeout;
@@ -26,8 +27,11 @@ public class SmsProviderClient(HttpClient http) : ISmsProviderClient
     public async Task<ProviderSendResult> SendAsync(string toE164, string body, Guid messageId, CancellationToken ct)
     {
         // messageId is sent as "reference" so a provider that supports it can detect duplicates.
+        // StringContent (not PostAsJsonAsync) so the request has a Content-Length instead of chunked encoding,
+        // which simple provider simulators often do not support.
+        var json = JsonSerializer.Serialize(new SendRequest(toE164, body, messageId.ToString()), JsonOptions);
         using var response = await CallAsync(
-            () => http.PostAsJsonAsync("send", new SendRequest(toE164, body, messageId.ToString()), JsonOptions, ct), ct);
+            () => http.PostAsync("send", new StringContent(json, Encoding.UTF8, "application/json"), ct), ct);
 
         var content = await response.Content.ReadFromJsonAsync<SendResponse>(ct);
         if (string.IsNullOrWhiteSpace(content?.Id))

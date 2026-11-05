@@ -37,6 +37,7 @@ public class SmsProviderClientTests
 
         result.ProviderMessageId.Should().Be("abc");
         handler.LastRequest!.RequestUri!.ToString().Should().Be("http://provider.test/send");
+        handler.LastRequest.Content!.Headers.ContentLength.Should().NotBeNull(); // no chunked encoding
         handler.LastBody.Should().Be($$"""{"to":"+972501234567","message":"hi","reference":"{{messageId}}"}""");
     }
 
