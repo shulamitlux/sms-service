@@ -14,6 +14,7 @@ public static class MessagesEndpoints
     public const string IdempotencyKeyHeader = "Idempotency-Key";
     private const int MaxIdempotencyKeyLength = 100;
     private const int MaxListSize = 100;
+    public const string NotAnEmployeePhoneError = "המספר אינו שייך לאף עובד במערכת";
 
     public static void MapMessagesEndpoints(this IEndpointRouteBuilder app)
     {
@@ -49,6 +50,10 @@ public static class MessagesEndpoints
 
         var phone = PhoneNumberNormalizer.Normalize(request.To);
         if (!phone.IsValid) errors["to"] = [phone.Error!];
+        // The system sends SMS to employees only: the number must belong to at least one employee.
+        // A number may be shared by several employees; it is still one message to one number.
+        else if (!await db.EmployeePhones.AnyAsync(p => p.PhoneE164 == phone.E164, ct))
+            errors["to"] = [NotAnEmployeePhoneError];
 
         var body = request.Body?.Trim() ?? "";
         if (MessageBodyRules.Validate(body) is { } bodyError) errors["body"] = [bodyError];

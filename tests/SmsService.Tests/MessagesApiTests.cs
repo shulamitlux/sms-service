@@ -4,6 +4,7 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SmsService.Api.Contracts;
+using SmsService.Api.Endpoints;
 using SmsService.Tests.Infrastructure;
 
 namespace SmsService.Tests;
@@ -65,6 +66,39 @@ public class MessagesApiTests(SqlServerFixture sql)
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
         problem!.Errors.Keys.Should().BeEquivalentTo(["to", "body"]);
+    }
+
+    [Fact]
+    public async Task Post_to_valid_number_that_belongs_to_no_employee_returns_400_and_stores_nothing()
+    {
+        var cs = await sql.CreateDatabaseAsync();
+        await using var factory = new ApiFactory(cs); // startup seeds employees from employees.seed.json
+        var client = factory.CreateClient();
+
+        // A valid Israeli mobile number that is not in the seed file.
+        var response = await client.SendAsync(Post(new { to = "050-9999999", body = "hello" }));
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+        problem!.Errors["to"].Should().Equal(MessagesEndpoints.NotAnEmployeePhoneError);
+
+        await using var db = SqlServerFixture.CreateContext(cs);
+        (await db.Messages.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Post_to_number_shared_by_two_employees_creates_a_single_message()
+    {
+        var cs = await sql.CreateDatabaseAsync();
+        await using var factory = new ApiFactory(cs);
+        var client = factory.CreateClient();
+
+        // In the seed file, 053-3333333 is shared by two employees.
+        var response = await client.SendAsync(Post(new { to = "053-3333333", body = "hello" }));
+
+        response.StatusCode.Should().Be(HttpStatusCode.Accepted);
+        await using var db = SqlServerFixture.CreateContext(cs);
+        (await db.Messages.CountAsync()).Should().Be(1);
     }
 
     [Fact]
