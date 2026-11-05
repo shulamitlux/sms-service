@@ -26,7 +26,7 @@ public static class MessagesEndpoints
             .ProducesProblem(StatusCodes.Status409Conflict);
 
         group.MapGet("/{id}", GetMessage)
-            .Produces<MessageResponse>()
+            .Produces<MessageStatusResponse>()
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status404NotFound);
 
@@ -112,12 +112,15 @@ public static class MessagesEndpoints
         if (!Guid.TryParse(id, out var messageId))
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["id"] = ["מזהה הודעה לא תקין"] });
 
-        var message = await db.Messages.AsNoTracking().SingleOrDefaultAsync(m => m.Id == messageId, ct);
-        if (message is null)
+        var status = await db.Messages.AsNoTracking()
+            .Where(m => m.Id == messageId)
+            .Select(m => new { m.Id, m.Status, m.Attempts, m.LastError, m.UpdatedAt })
+            .SingleOrDefaultAsync(ct);
+        if (status is null)
             return Results.Problem(statusCode: StatusCodes.Status404NotFound, title: "Message not found");
 
-        var responses = await ToResponses(db, [message], ct);
-        return Results.Ok(responses[0]);
+        return Results.Ok(new MessageStatusResponse(
+            status.Id, status.Status.ToString(), status.Attempts, status.LastError, status.UpdatedAt));
     }
 
     private static async Task<IResult> ListMessages(string? status, AppDbContext db, CancellationToken ct)
