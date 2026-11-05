@@ -1,0 +1,20 @@
+# .NET
+bin/
+obj/
+.vs/
+*.user
+*.suo
+TestResults/
+
+# Angular / Node
+node_modules/
+dist/
+.angular/
+
+# Env & secrets
+.env
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
